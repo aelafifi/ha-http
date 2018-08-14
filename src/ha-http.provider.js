@@ -14,10 +14,13 @@
             data: {},
             listenBg: true,
         };
+
+        this.setDefaults = defaults => angular.extend(config, defaults);
+
         let events = $eventGroupProvider.get();
 
-        this.on = events.on;
-        this.off = events.off;
+        this.on = events.on.bind(events);
+        this.off = events.off.bind(events);
 
         this.$get = $httpApiService;
 
