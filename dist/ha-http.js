@@ -278,10 +278,15 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             data: {},
             listenBg: true
         };
+
+        this.setDefaults = function (defaults) {
+            return angular.extend(config, defaults);
+        };
+
         var events = $eventGroupProvider.get();
 
-        this.on = events.on;
-        this.off = events.off;
+        this.on = events.on.bind(events);
+        this.off = events.off.bind(events);
 
         this.$get = $httpApiService;
 
