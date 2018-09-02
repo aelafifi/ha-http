@@ -7,6 +7,8 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
     <script src="../node_modules/angular/angular.min.js"></script>
+    <script src="../node_modules/ng-file-upload/dist/ng-file-upload-all.min.js"></script>
+    <script src="../node_modules/ng-file-upload/dist/ng-file-upload-shim.min.js"></script>
     <script src="../dist/ha-http.js"></script>
 </head>
 <body>
@@ -18,34 +20,11 @@
 
         .run(function ($httpApi) {
             let x = $httpApi({
-                4: function() {
-                    alert(4);
-                }
-            });
-            x.get({
                 url: "x",
-                404: [
-                    function() {
-                        this.preventGroup();
-                    },
-                    function() {
-                        console.log("404");
-                    },
-                ],
-                4: [
-                    function() {
-                        console.log("4");
-                    },
-                    function() {
-                        this.preventAll();
-                    },
-                ],
-                reject: [
-                    function() {
-                        console.log("Reject");
-                    }
-                ]
-            });
+                reject: function() {
+                    alert("rejected!");
+                },
+            }).upload();
         });
 </script>
 

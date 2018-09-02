@@ -4,15 +4,16 @@
 
     function HttpApiRequestService() {
         class HttpApiRequest {
-            constructor(holder, httpFunction, options) {
+            constructor(providerInstance, httpFunction, options) {
                 this.state = "loading";
                 this.response = null;
                 this.progress = null;
-                this.holder = holder;
+                this.providerInstance = providerInstance;
                 this.inBg = false;
                 this.simulateAbort = false;
 
                 options.url = new URL(options.url, options.baseUrl || location.href).href;
+                this.callCallbacks(options, {}, ["before"]);
                 this.httpRequest = httpFunction(options);
 
                 this.httpRequest.then(resp => {
@@ -46,10 +47,12 @@
                 if (this.inBg && !options.listenBg || this.simulateAbort) {
                     return;
                 }
-                let _events = this.holder.events;
+                let _events = this.providerInstance.events;
                 for (let i = 0; i < events.length; i++) {
-                    this.holder.options[events[i]] && _events.on(events[i], this.holder.options[events[i]], 50);
-                    options[events[i]] && _events.on(events[i], options[events[i]], 50);
+                    const generalEvents = this.providerInstance.options[events[i]];
+                    const customEvents = options[events[i]];
+                    generalEvents && _events.on(events[i], generalEvents, 50);
+                    customEvents && generalEvents !== customEvents && _events.on(events[i], customEvents, 50);
                 }
                 _events.emit(events, resp.data, resp.status, resp.statusText);
             }
@@ -59,8 +62,8 @@
             }
         }
 
-        return (holder, httpFunction, options) =>
-            new HttpApiRequest(holder, httpFunction, options);
+        return (providerInstance, httpFunction, options) =>
+            new HttpApiRequest(providerInstance, httpFunction, options);
     }
 
 })();

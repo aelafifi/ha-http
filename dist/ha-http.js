@@ -192,7 +192,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
     function HttpApiRequestService() {
         var HttpApiRequest = function () {
-            function HttpApiRequest(holder, httpFunction, options) {
+            function HttpApiRequest(providerInstance, httpFunction, options) {
                 var _this2 = this;
 
                 _classCallCheck(this, HttpApiRequest);
@@ -200,11 +200,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                 this.state = "loading";
                 this.response = null;
                 this.progress = null;
-                this.holder = holder;
+                this.providerInstance = providerInstance;
                 this.inBg = false;
                 this.simulateAbort = false;
 
                 options.url = new URL(options.url, options.baseUrl || location.href).href;
+                this.callCallbacks(options, {}, ["before"]);
                 this.httpRequest = httpFunction(options);
 
                 this.httpRequest.then(function (resp) {
@@ -243,10 +244,12 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                     if (this.inBg && !options.listenBg || this.simulateAbort) {
                         return;
                     }
-                    var _events = this.holder.events;
+                    var _events = this.providerInstance.events;
                     for (var i = 0; i < events.length; i++) {
-                        this.holder.options[events[i]] && _events.on(events[i], this.holder.options[events[i]], 50);
-                        options[events[i]] && _events.on(events[i], options[events[i]], 50);
+                        var generalEvents = this.providerInstance.options[events[i]];
+                        var customEvents = options[events[i]];
+                        generalEvents && _events.on(events[i], generalEvents, 50);
+                        customEvents && generalEvents !== customEvents && _events.on(events[i], customEvents, 50);
                     }
                     _events.emit(events, resp.data, resp.status, resp.statusText);
                 }
@@ -260,18 +263,18 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
             return HttpApiRequest;
         }();
 
-        return function (holder, httpFunction, options) {
-            return new HttpApiRequest(holder, httpFunction, options);
+        return function (providerInstance, httpFunction, options) {
+            return new HttpApiRequest(providerInstance, httpFunction, options);
         };
     }
 })();
 (function () {
 
-    angular.module("ha.http").provider("$httpApi", $httpApiProvider);
+    var module = angular.module("ha.http").provider("$httpApi", $httpApiProvider);
 
-    $httpApiProvider.$inject = ["$injector", "$eventGroupProvider"];
+    $httpApiProvider.$inject = ["$eventGroupProvider"];
 
-    function $httpApiProvider($injector, $eventGroupProvider) {
+    function $httpApiProvider($eventGroupProvider) {
         var config = {
             consurrent: false,
             baseUrl: location.href,
@@ -290,9 +293,9 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
         this.$get = $httpApiService;
 
-        $httpApiService.$inject = ["$http", "HttpApiRequest"];
+        $httpApiService.$inject = ["$http", "HttpApiRequest", "$injector"];
 
-        function $httpApiService($http, HttpApiRequest) {
+        function $httpApiService($http, HttpApiRequest, $injector) {
             var HttpApi = function () {
                 function HttpApi(options) {
                     _classCallCheck(this, HttpApi);
@@ -342,9 +345,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
                             data = data();
                         }
                         options = this.getOptions(options, { data: data });
-                        if (!$injector.has("Upload")) {
+                        if (!module.canUpload) {
                             throw new Error("`ng-file-upload` dependency required!");
                         }
+                        console.log($injector.get("Upload"));
                         return this.realSend($injector.get("Upload").upload, options);
                     }
                 }, {

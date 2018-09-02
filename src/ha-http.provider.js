@@ -1,13 +1,12 @@
 (function () {
 
-    angular.module("ha.http").provider("$httpApi", $httpApiProvider);
+    const module = angular.module("ha.http").provider("$httpApi", $httpApiProvider);
 
     $httpApiProvider.$inject = [
-        "$injector",
         "$eventGroupProvider",
     ];
 
-    function $httpApiProvider($injector, $eventGroupProvider) {
+    function $httpApiProvider($eventGroupProvider) {
         let config = {
             consurrent: false,
             baseUrl: location.href,
@@ -27,9 +26,10 @@
         $httpApiService.$inject = [
             "$http",
             "HttpApiRequest",
+            "$injector",
         ];
 
-        function $httpApiService($http, HttpApiRequest) {
+        function $httpApiService($http, HttpApiRequest, $injector) {
             class HttpApi {
                 constructor(options) {
                     if (typeof options === 'string') {
@@ -64,9 +64,10 @@
                         data = data();
                     }
                     options = this.getOptions(options, {data});
-                    if (!$injector.has("Upload")) {
+                    if (!module.canUpload) {
                         throw new Error("`ng-file-upload` dependency required!");
                     }
+                    console.log($injector.get("Upload"));
                     return this.realSend($injector.get("Upload").upload, options);
                 }
 
